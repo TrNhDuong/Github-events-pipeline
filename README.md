@@ -15,14 +15,38 @@ Dự án này là một đường ống dữ liệu (data pipeline) hoàn chỉn
 - **Định dạng gốc**: JSONL nén dưới dạng `gzip`
 - **Kích thước**: Khoảng 100-200MB cho mỗi file dữ liệu hàng giờ
 
-### Các sự kiện (Events) được quan tâm & thu thập
-Kịch bản `main.py` sẽ thu thập và tập trung vào các nhóm sự kiện chính sau đây:
-- `PushEvent`
-- `PullRequestEvent`
-- `IssuesEvent`
-- `WatchEvent`
-- `ForkEvent`
-- `CreateEvent`
+## Cấu trúc thư mục (Directory Structure)
+
+```text
+Github Data Platform/
+├── doc/
+│   ├── AIRFLOW TRIGGER DATABRICK.md
+│   ├── DATABRICK SECRET SCOPE SETUP.md
+│   └── SILVER LAYER DATA TRANSFORM.md
+├── pipeline/
+│   ├── 01_bronze.py
+│   ├── 02_silver.py
+│   └── 03_gold.py
+├── src/
+│   ├── __init__.py
+│   ├── adls/
+│   │   ├── __init__.py
+│   │   └── adls.py
+│   ├── ingestion/
+│   │   ├── __init__.py
+│   │   └── ingest.py
+│   ├── transformation/
+│   │   ├── __init__.py
+│   │   └── parse.py
+│   └── utils/
+├── test/
+│   └── unit_test/
+├── extract_samples.py
+├── main.py
+├── README.md
+├── requirements.txt
+└── sample.jsonl
+```
 
 ## Kiến trúc và Luồng dữ liệu (Data Flow)
 Mô hình hoạt động theo lịch trình chạy mỗi giờ một lần (hourly batch processing):
@@ -35,24 +59,17 @@ Mô hình hoạt động theo lịch trình chạy mỗi giờ một lần (hour
 ## Hướng dẫn sử dụng
 
 ### 1. Chuẩn bị môi trường Python
-Cài đặt thư viện yêu cầu (ví dụ: `requests`):
+Cài đặt thư viện yêu cầu:
 ```bash
-pip install requests
+pip install -r requirements.txt
 ```
 
-### 2. Kịch bản thu thập dữ liệu (Dùng thử nghiệm)
-Chạy file `main.py` để kiểm thử logic kéo dữ liệu về máy:
-```bash
-python main.py
-```
-*(Bạn có thể mở file `main.py` và sửa tham số của hàm `download_hour(date, hour)` nếu muốn thu thập dữ liệu ở một thời điểm cụ thể).*
-
-### 3. Cấu hình Azure & Databricks
+### 2. Cấu hình Azure & Databricks
 - Tạo **Azure Storage Account (ADLS Gen 2)** với kiến trúc thư mục chuẩn: `bronze`, `silver`, `gold`.
 - Truy cập **Azure Databricks**, tiến hành mount ADLS Gen 2 vào workspace.
 - Upload các notebook xử lý dữ liệu lên Databricks Workspace.
 
-### 4. Chạy Apache Airflow (Local)
+### 3. Chạy Apache Airflow (Local)
 Khởi tạo và chạy webserver cũng như scheduler của Airflow ở terminal:
 ```bash
 airflow webserver --port 8080
