@@ -1,5 +1,5 @@
 import pytest
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, Row
 
 from src.transformation.parse import (
     parse_push_event,
@@ -20,24 +20,26 @@ def spark():
         .getOrCreate()
 
 def _get_base_event(event_type: str, id_val: str):
+    # Đã bọc các nested object bằng Row để đảm bảo PySpark infer ra StructType
     return {
         "id": id_val,
         "type": event_type,
         "created_at": "2025-01-01T00:00:00Z",
-        "actor": {"id": 1, "login": "testuser"},
-        "repo": {"id": 10, "name": "org/repo"},
-        "org": {"id": 100}
+        "actor": Row(id=1, login="testuser"),
+        "repo": Row(id=10, name="org/repo"),
+        "org": Row(id=100)
     }
 
 def test_parse_push_event(spark):
     event = _get_base_event("PushEvent", "1")
-    event["payload"] = {
-        "push_id": 1234, 
-        "size": 2, 
-        "ref": "refs/heads/main"
-    }
+    event["payload"] = Row(
+        push_id=1234, 
+        size=2, 
+        ref="refs/heads/main"
+    )
     
-    df = spark.createDataFrame([event])
+    # Ép dict ngoài cùng thành Row
+    df = spark.createDataFrame([Row(**event)])
     result_df = parse_push_event(spark, df)
     
     columns = result_df.columns
@@ -54,16 +56,16 @@ def test_parse_push_event(spark):
 
 def test_parse_pull_request_event(spark):
     event = _get_base_event("PullRequestEvent", "2")
-    event["payload"] = {
-        "action": "opened",
-        "number": 42,
-        "pull_request": {
-            "id": 999,
-            "merged": False
-        }
-    }
+    event["payload"] = Row(
+        action="opened",
+        number=42,
+        pull_request=Row(
+            id=999,
+            merged=False
+        )
+    )
     
-    df = spark.createDataFrame([event])
+    df = spark.createDataFrame([Row(**event)])
     result_df = parse_pull_request_event(spark, df)
     
     row = result_df.collect()[0]
@@ -75,15 +77,15 @@ def test_parse_pull_request_event(spark):
 
 def test_parse_issues_event(spark):
     event = _get_base_event("IssuesEvent", "3")
-    event["payload"] = {
-        "action": "closed",
-        "issue": {
-            "id": 888,
-            "number": 12
-        }
-    }
+    event["payload"] = Row(
+        action="closed",
+        issue=Row(
+            id=888,
+            number=12
+        )
+    )
     
-    df = spark.createDataFrame([event])
+    df = spark.createDataFrame([Row(**event)])
     result_df = parse_issues_event(spark, df)
     
     row = result_df.collect()[0]
@@ -93,13 +95,13 @@ def test_parse_issues_event(spark):
 
 def test_parse_issue_comment_event(spark):
     event = _get_base_event("IssueCommentEvent", "4")
-    event["payload"] = {
-        "action": "created",
-        "issue": {"id": 888},
-        "comment": {"id": 777}
-    }
+    event["payload"] = Row(
+        action="created",
+        issue=Row(id=888),
+        comment=Row(id=777)
+    )
     
-    df = spark.createDataFrame([event])
+    df = spark.createDataFrame([Row(**event)])
     result_df = parse_issue_comment_event(spark, df)
     
     row = result_df.collect()[0]
@@ -109,23 +111,23 @@ def test_parse_issue_comment_event(spark):
 
 def test_parse_watch_event(spark):
     event = _get_base_event("WatchEvent", "5")
-    event["payload"] = {"action": "started"}
+    event["payload"] = Row(action="started")
     
-    df = spark.createDataFrame([event])
+    df = spark.createDataFrame([Row(**event)])
     result_df = parse_watch_event(spark, df)
     row = result_df.collect()[0]
     assert row["watch_action"] == "started"
 
 def test_parse_fork_event(spark):
     event = _get_base_event("ForkEvent", "6")
-    event["payload"] = {
-        "forkee": {
-            "id": 555,
-            "full_name": "neworg/repo"
-        }
-    }
+    event["payload"] = Row(
+        forkee=Row(
+            id=555,
+            full_name="neworg/repo"
+        )
+    )
     
-    df = spark.createDataFrame([event])
+    df = spark.createDataFrame([Row(**event)])
     result_df = parse_fork_event(spark, df)
     row = result_df.collect()[0]
     assert row["fork_new_repo_id"] == 555
@@ -133,12 +135,12 @@ def test_parse_fork_event(spark):
 
 def test_parse_create_event(spark):
     event = _get_base_event("CreateEvent", "7")
-    event["payload"] = {
-        "ref_type": "branch",
-        "ref": "feature-x"
-    }
+    event["payload"] = Row(
+        ref_type="branch",
+        ref="feature-x"
+    )
     
-    df = spark.createDataFrame([event])
+    df = spark.createDataFrame([Row(**event)])
     result_df = parse_create_event(spark, df)
     row = result_df.collect()[0]
     assert row["create_ref_type"] == "branch"
@@ -146,12 +148,12 @@ def test_parse_create_event(spark):
 
 def test_parse_delete_event(spark):
     event = _get_base_event("DeleteEvent", "8")
-    event["payload"] = {
-        "ref_type": "tag",
-        "ref": "v1.0.0"
-    }
+    event["payload"] = Row(
+        ref_type="tag",
+        ref="v1.0.0"
+    )
     
-    df = spark.createDataFrame([event])
+    df = spark.createDataFrame([Row(**event)])
     result_df = parse_delete_event(spark, df)
     row = result_df.collect()[0]
     assert row["delete_ref_type"] == "tag"
