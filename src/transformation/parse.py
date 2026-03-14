@@ -1,4 +1,5 @@
-from pyspark.sql import SparkSession, DataFrame, functions as col
+from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql.functions import col
 
 def _select_common_attributes():
     return [

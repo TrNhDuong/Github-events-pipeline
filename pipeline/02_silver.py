@@ -46,4 +46,4 @@ def silver_layer_execution(year: int, month: int, day: int):
         output_path = f"adls://duongbambo.dfs.core.windows.net/githubarchive/silver/{event_type}/{year}/{month:02d}/{day:02d}"
         df_parsed.write.mode("overwrite").parquet(output_path)  # ← ghi output
 
-    df_bronze.unpersist()  # ← giải phóng RAM
+    df_bronze.unpersist() 

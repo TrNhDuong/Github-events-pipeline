@@ -1,5 +1,3 @@
-# Đã xóa dòng version để tránh warning
-
 x-airflow-common:
   &airflow-common
   # Build từ Dockerfile hiện tại để có pandas, psycopg2...
