@@ -48,6 +48,7 @@ DATABRICKS_HOST=https://adb-xxx.azuredatabricks.net
 DATABRICKS_TOKEN=dapi-xxx
 DATABRICKS_CLUSTER_ID=your-cluster-id
 DATABRICKS_CONN_ID=databricks_default
+AIRFLOW_UID=50000
 ```
 
 ### 2. Build và khởi chạy hệ thống

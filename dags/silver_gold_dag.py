@@ -18,7 +18,7 @@ default_args = {
 @dag(
     dag_id='github_silver_gold_transformation',
     default_args=default_args,
-    schedule_interval='30 0 * * *',  # Chạy lúc 00:30 mỗi ngày
+    schedule='30 0 * * *',  # Chạy lúc 00:30 mỗi ngày
     start_date=datetime(2026, 3, 15),
     catchup=True,
     max_active_runs=1,

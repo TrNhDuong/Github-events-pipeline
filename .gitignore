@@ -3,3 +3,7 @@ main.py
 sample.jsonl
 __pycache__
 .env
+config/
+logs/
+plugins/
+venv/

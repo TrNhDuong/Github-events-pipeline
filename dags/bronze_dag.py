@@ -18,7 +18,7 @@ default_args = {
 @dag(
     dag_id='github_bronze_extraction',
     default_args=default_args,
-    schedule_interval='0 * * * *',  # Chạy mỗi giờ
+    schedule='0 * * * *',  # Chạy mỗi giờ
     start_date=datetime(2026, 3, 15),
     catchup=True,
     max_active_runs=3,
