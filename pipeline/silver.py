@@ -46,4 +46,14 @@ def silver_layer_execution(year: int, month: int, day: int):
         output_path = f"adls://duongbambo.dfs.core.windows.net/githubarchive/silver/{event_type}/{year}/{month:02d}/{day:02d}"
         df_parsed.write.mode("overwrite").parquet(output_path)  # ← ghi output
 
-    df_bronze.unpersist() 
+    df_bronze.unpersist()
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--year",  type=int)
+    parser.add_argument("--month", type=int)
+    parser.add_argument("--day",   type=int)
+    args = parser.parse_args()
+
+    silver_layer_execution(args.year, args.month, args.day)

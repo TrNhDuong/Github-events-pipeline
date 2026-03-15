@@ -30,5 +30,13 @@ def bronze_layer_execution(day: int, month: int, year: int, hour: int):
 
     print(f"Ingested and stored data for {date_str} hour {hour:02d} in Bronze layer")
 
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--year",  type=int)
+    parser.add_argument("--month", type=int)
+    parser.add_argument("--day",   type=int)
+    parser.add_argument("--hour",  type=int)
+    args = parser.parse_args()
 
-
+    bronze_layer_execution(args.day, args.month, args.year, args.hour)
