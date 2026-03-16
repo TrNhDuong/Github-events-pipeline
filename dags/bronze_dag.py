@@ -6,7 +6,7 @@ from airflow.providers.databricks.operators.databricks import DatabricksSubmitRu
 # Cấu hình chung - Đọc từ environment variables (set trong .env qua docker-compose)
 DATABRICKS_CONN_ID = os.getenv("DATABRICKS_CONN_ID", "databricks_default")
 DATABRICKS_CLUSTER_ID = os.getenv("DATABRICKS_CLUSTER_ID", "your-cluster-id")
-DATABRICKS_REPO_PATH = "/Workspace/Repos/Github-events-pipeline/pipeline"
+DATABRICKS_REPO_PATH = os.getenv("DATABRICKS_REPO_PATH", "/Workspace/Repos/Github-events-pipeline/pipeline")    
 
 default_args = {
     'owner': 'data-engineer',
@@ -33,10 +33,10 @@ def github_bronze_dag():
         spark_python_task={
             'python_file': f'{DATABRICKS_REPO_PATH}/bronze.py',
             'parameters': [
-                '--year',  '{{ execution_date.year }}',
-                '--month', '{{ execution_date.month }}',
-                '--day',   '{{ execution_date.day }}',
-                '--hour',  '{{ execution_date.hour }}',
+                '--year',  '{{ logical_date.year }}',
+                '--month', '{{ logical_date.month }}',
+                '--day',   '{{ logical_date.day }}',
+                '--hour',  '{{ logical_date.hour }}',
             ],
         },
         polling_period_seconds=30

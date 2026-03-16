@@ -98,7 +98,12 @@ AIRFLOW_UID=50000
 
 ---
 
-### 2. Build and start the stack
+### 2. Setup Databricks Secret Scope
+Complete this step by following the instructions in `doc/guide/DATABRICKS_SECRET_SCOPE_SETUP.md`
+
+---
+
+### 3. Build and start the stack
 
 ```bash
 # Build the custom Airflow image and start all services
@@ -113,7 +118,7 @@ This command will:
 
 ---
 
-### 3. Access Airflow UI
+### 4. Access Airflow UI
 
 | | |
 | :--- | :--- |

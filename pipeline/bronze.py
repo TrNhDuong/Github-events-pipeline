@@ -12,7 +12,7 @@ def bronze_layer_execution(day: int, month: int, year: int, hour: int):
     date_str = f"{year:04d}-{month:02d}-{day:02d}"
 
     try: 
-        github_events_data = pd.DataFrame(ingest_hour(account, container, date_str, hour))
+        github_events_data = pd.DataFrame(ingest_hour(date_str, hour))
     except Exception as e:
         raise ValueError(f"Error ingesting data for {date_str} hour {hour}: {e}")
     
