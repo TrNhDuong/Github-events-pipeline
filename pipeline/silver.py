@@ -11,13 +11,13 @@ from src.transformation.parse import (
 
 TYPE_PARSE_MAP = {
     "PushEvent":         parse_push_event,
-    "PullRequestEvent":  parse_pull_request_event,
-    "IssuesEvent":       parse_issues_event,
-    "IssueCommentEvent": parse_issue_comment_event,
-    "WatchEvent":        parse_watch_event,
-    "ForkEvent":         parse_fork_event,
-    "CreateEvent":       parse_create_event,
-    "DeleteEvent":       parse_delete_event,
+    # "PullRequestEvent":  parse_pull_request_event,
+    # "IssuesEvent":       parse_issues_event,
+    # "IssueCommentEvent": parse_issue_comment_event,
+    # "WatchEvent":        parse_watch_event,
+    # "ForkEvent":         parse_fork_event,
+    # "CreateEvent":       parse_create_event,
+    # "DeleteEvent":       parse_delete_event,
 }
 
 def silver_layer_execution(year: int, month: int, day: int):

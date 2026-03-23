@@ -6,7 +6,7 @@ A complete end-to-end data pipeline for collecting, processing, and analysing ev
 
 ## Architecture
 
-![Pipeline Architecture](./assets/pipeline_architecture.png)
+![Pipeline Architecture](./assets/pipeline_architecture1.png)
 
 | Step | Description |
 | :---: | :--- |
@@ -34,9 +34,8 @@ A complete end-to-end data pipeline for collecting, processing, and analysing ev
 
 ```
 Bronze  →  raw JSON, hourly partitions, no schema enforcement
-Silver  →  8 event types filtered, cleaned, typed (PushEvent, PullRequestEvent, …)
-Gold    →  Star Schema — Fact_DevActivity · Fact_Community · Fact_IssueLifecycle
-                       + Dim_Date · Dim_Actor · Dim_Repo · Dim_Org
+Silver  →  Push event after transform
+Gold    →  Data analytics
 ```
 
 ---

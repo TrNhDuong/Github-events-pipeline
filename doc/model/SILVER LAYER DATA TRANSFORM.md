@@ -1,99 +1,55 @@
-# Silver Layer Data Transformation
+# Silver Layer — Data Transformation
 
-This document details the transformation rules applied to the Bronze layer data to create the Silver layer. We filter the raw GitHub Archive events to retain only the 8 core event types that are valuable for analyzing repository activity, community engagement, and development lifecycle.
+> Tài liệu này mô tả các quy tắc transformation được áp dụng lên dữ liệu Bronze layer để tạo ra Silver layer, tập trung vào phân tích **PushEvent**.
 
-## Core Event Types Processed
-1. `PushEvent`
-2. `PullRequestEvent`
-3. `IssuesEvent`
-4. `IssueCommentEvent`
-5. `WatchEvent`
-6. `ForkEvent`
-7. `CreateEvent`
-8. `DeleteEvent`
+---
 
-## Common Attributes (Retained for ALL Events)
-These attributes are extracted from the root of the JSON event object and are common to all retained events. They form the core dimensions of the dataset.
+## Mục lục
 
-| Original JSON Path | New Attribute Name | Role / Purpose |
+- [① Tổng quan](#-tổng-quan)
+- [② Thuộc tính chung](#-thuộc-tính-chung-common-attributes)
+- [③ Thuộc tính đặc thù — PushEvent](#-thuộc-tính-đặc-thù--pushevent)
+- [④ Lưu ý kỹ thuật](#-lưu-ý-kỹ-thuật)
+
+---
+
+## ① Tổng quan
+
+Từ toàn bộ raw GitHub Archive events, Silver layer lọc và giữ lại sự kiện **`PushEvent`** — đại diện cho hoạt động commit code thực tế lên repository, phản ánh trực tiếp tốc độ và khối lượng phát triển phần mềm.
+
+---
+
+## ② Thuộc tính chung (Common Attributes)
+
+Các thuộc tính dưới đây được trích xuất từ root của JSON event object và áp dụng cho mọi event, bao gồm `PushEvent`.
+
+| JSON Path gốc | Tên thuộc tính mới | Vai trò / Mục đích |
 | :--- | :--- | :--- |
-| `id` | `event_id` | Unique identifier for the event. Used as the primary key. |
-| `type` | `event_type` | The type of the event (e.g., "PushEvent"). Used for filtering and aggregations. |
-| `created_at` | `created_at` | The timestamp when the event occurred. Used for time-series analysis and trending. |
-| `actor.id` | `actor_id` | Unique identifier of the user (actor) who triggered the event. Links to the User Dimension. |
-| `actor.login` | `actor_login` | Username (handle) of the user who triggered the event. |
-| `repo.id` | `repo_id` | Unique identifier of the repository where the event occurred. Links to the Repo Dimension. |
-| `repo.name` | `repo_name` | Full name of the repository (format: `owner/repo_name`). Represents the source repository. |
-| `org.id` | `org_id` | (Optional) Unique identifier of the organization owning the repository. |
+| `id` | `event_id` | Định danh duy nhất của event. Dùng làm primary key. |
+| `type` | `event_type` | Loại event — luôn là `"PushEvent"` trong context này. |
+| `created_at` | `created_at` | Timestamp khi event xảy ra. Dùng cho phân tích time-series và trending. |
+| `actor.id` | `actor_id` | ID của user đã thực hiện push. Liên kết với User Dimension. |
+| `actor.login` | `actor_login` | Username của user thực hiện push. |
+| `repo.id` | `repo_id` | ID của repository được push vào. Liên kết với Repo Dimension. |
+| `repo.name` | `repo_name` | Tên đầy đủ của repository (format: `owner/repo_name`). |
+| `org.id` | `org_id` | *(Optional)* ID của tổ chức sở hữu repository. |
 
-## Event-Specific Attributes (Extracted from `payload`)
+---
 
-Depending on the `event_type`, specific attributes are extracted from the nested `payload` JSON object. This strategy employs a sparse matrix approach: if a row is a `PushEvent`, its specific columns will be populated, but `PullRequestEvent` columns will be `NULL`. This is highly optimal for columnar formats like Parquet/Delta.
+## ③ Thuộc tính đặc thù — PushEvent
 
-### 1. PushEvent
-Captures code commits pushed to a branch or tag. Represents the actual coding effort.
+Các thuộc tính dưới đây được trích xuất từ nested object `payload` và **chỉ có giá trị** khi `event_type = "PushEvent"`.
 
-| Original JSON Path | New Attribute Name | Role / Purpose |
+| JSON Path gốc | Tên thuộc tính mới | Vai trò / Mục đích |
 | :--- | :--- | :--- |
-| `payload.push_id` | `push_id` | Unique identifier for the push action itself. |
-| `payload.size` | `push_commit_count` | The number of distinct commits included in this push. Used to measure code volume/velocity. |
-| `payload.ref` | `push_ref` | The Git reference (e.g., `refs/heads/main`) being pushed to. Identifies the target branch. |
+| `payload.push_id` | `push_id` | Định danh duy nhất cho hành động push. |
+| `payload.size` | `push_commit_count` | Số lượng commit trong push này. Dùng để đo lường code velocity. |
+| `payload.ref` | `push_ref` | Git reference được push đến (ví dụ: `refs/heads/main`). Xác định target branch. |
 
-### 2. PullRequestEvent
-Captures lifecycle events of Pull Requests. Represents structured feature development and code integration.
+---
 
-| Original JSON Path | New Attribute Name | Role / Purpose |
-| :--- | :--- | :--- |
-| `payload.action` | `pr_action` | The action performed on the PR (e.g., "opened", "closed", "reopened"). |
-| `payload.number` | `pr_number` | The PR number on GitHub (e.g., PR #123). |
-| `payload.pull_request.id` | `pr_id` | Unique technical identifier of the Pull Request object. |
-| `payload.pull_request.merged` | `pr_is_merged` | Boolean flag indicating if a "closed" PR was successfully merged into the target branch. |
+## ④ Lưu ý kỹ thuật
 
-### 3. IssuesEvent
-Captures lifecycle events of repository Issues. Represents bug tracking and feature requests.
-
-| Original JSON Path | New Attribute Name | Role / Purpose |
-| :--- | :--- | :--- |
-| `payload.action` | `issue_action` | The action performed on the issue (e.g., "opened", "closed", "reopened"). |
-| `payload.issue.id` | `issue_id` | Unique technical identifier of the Issue object. |
-| `payload.issue.number` | `issue_number` | The Issue number on GitHub (e.g., Issue #456). |
-
-### 4. IssueCommentEvent
-Captures comments made on Issues or Pull Requests. Represents community engagement and developer communication.
-
-| Original JSON Path | New Attribute Name | Role / Purpose |
-| :--- | :--- | :--- |
-| `payload.action` | `comment_action` | The action performed on the comment (e.g., "created", "edited", "deleted"). |
-| `payload.issue.id` | `comment_target_issue_id` | The ID of the parent Issue or PR that this comment belongs to. Used to link discussions to their source. |
-| `payload.comment.id` | `comment_id` | Unique technical identifier of the comment itself. |
-
-### 5. WatchEvent
-Captures when a user "stars" a repository.
-
-| Original JSON Path | New Attribute Name | Role / Purpose |
-| :--- | :--- | :--- |
-| `payload.action` | `watch_action` | Typically "started". Represents the action of starring the parent repository. |
-
-### 6. ForkEvent
-Captures when a user forks a repository. Represents deep interest in utilizing or contributing to the codebase.
-
-| Original JSON Path | New Attribute Name | Role / Purpose |
-| :--- | :--- | :--- |
-| `payload.forkee.id` | `fork_new_repo_id` | The unique ID of the *newly created* destination repository (the fork in the actor's account). |
-| `payload.forkee.full_name` | `fork_new_repo_name` | The full name of the *newly created* destination repository (e.g., `actor/forked-repo`). |
-
-### 7. CreateEvent
-Captures the creation of a repository, branch, or tag.
-
-| Original JSON Path | New Attribute Name | Role / Purpose |
-| :--- | :--- | :--- |
-| `payload.ref_type` | `create_ref_type` | The type of Git object created: "repository", "branch", or "tag". |
-| `payload.ref` | `create_ref_name` | The name of the created branch or tag (is naturally `null` if the `ref_type` is "repository"). |
-
-### 8. DeleteEvent
-Captures the deletion of a branch or tag. Represents repository housekeeping.
-
-| Original JSON Path | New Attribute Name | Role / Purpose |
-| :--- | :--- | :--- |
-| `payload.ref_type` | `delete_ref_type` | The type of Git object deleted: "branch" or "tag". |
-| `payload.ref` | `delete_ref_name` | The name of the branch or tag that was deleted. |
+- Dữ liệu được lưu trữ theo định dạng **Parquet / Delta** — tối ưu cho columnar storage.
+- Chỉ giữ lại các event có `event_type = "PushEvent"`, các event type khác bị loại bỏ ở bước filtering.
+- `push_commit_count` là chỉ số cốt lõi để đánh giá **code volume** và **development velocity** theo thời gian.
