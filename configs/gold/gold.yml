@@ -1,0 +1,7 @@
+source:
+  type: parquet
+  path: silver
+
+destination:
+  type: parquet
+  path: gold

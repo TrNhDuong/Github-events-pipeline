@@ -1,0 +1,10 @@
+source:
+  type: api
+  url: https://data.gharchive.org/{date}-{hour}.json.gz
+
+destination:
+  type: delta
+  path: bronze
+
+schedule:
+  frequency: hourly

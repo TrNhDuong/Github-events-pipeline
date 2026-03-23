@@ -1,15 +1,21 @@
 from src.ingestion.ingest import ingest_hour
 from src.adls.adls import AzureDataLakeClient
+from src.core.config_loader import ConfigLoader 
 import pandas as pd
-
-account = 'duongbambo'
-container = 'githubarchive'
-directory = 'bronze'
+ 
 
 def bronze_layer_execution(day: int, month: int, year: int, hour: int):
     storage_key = dbutils.secrets.get(scope="storage_secret", key="storage_key")
 
     date_str = f"{year:04d}-{month:02d}-{day:02d}"
+
+    loader = ConfigLoader()
+    account_config = loader.load("account/account.yml")
+    bronze_config = loader.load("bronze/bronze.yml") 
+
+    account = account_config["source"]["account"]
+    container = account_config["source"]["container"]
+    directory = bronze_config["destination"]["path"]       
 
     try: 
         github_events_data = pd.DataFrame(ingest_hour(date_str, hour))
@@ -22,7 +28,7 @@ def bronze_layer_execution(day: int, month: int, year: int, hour: int):
         raise ValueError(f"Error initializing AzureDataLakeClient: {e}")
     
     try: 
-        adls_client.upload_dataframe(github_events_data, f"{directory}/{year}/{month:02d}/{day:02d}/{hour:02d}.json", format='json')
+        adls_client.upload_dataframe(github_events_data, f"{directory}/{year}/{month:02d}/{day:02d}/{hour:02d}.json", format="json")
     except Exception as e:
         raise ValueError(f"Error uploading data to ADLS for {date_str} hour {hour}: {e}")
     

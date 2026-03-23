@@ -1,0 +1,14 @@
+source:
+  type: delta
+  path: bronze
+
+destination:
+  type: delta
+  path: silver
+  format: parquet
+
+action:
+  type: parse
+  parse_type: [push_parse]
+
+
